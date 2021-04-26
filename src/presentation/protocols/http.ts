@@ -1,7 +1,5 @@
 export interface HttpRequest {
-  to: string
-  title: string
-  body: string
+  body?: any
 }
 
 export interface HttpResponse {
