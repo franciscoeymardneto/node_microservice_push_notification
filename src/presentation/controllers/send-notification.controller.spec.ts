@@ -1,13 +1,30 @@
+import { SendNotification } from '../../domain/usecases/send-notification'
+import { HttpRequest, HttpResponse } from '../protocols/http'
 import { SendNotificationController } from './send-notification.controller'
 
 type SutTypes = {
   sut: SendNotificationController
+  pushNotification: SendNotification
+}
+
+const pushNotificationStub = (): SendNotification => {
+  class PushNotification implements SendNotification {
+    async send (params: HttpRequest): Promise<HttpResponse> {
+      const fakeResponse = {
+        statusCode: 200
+      }
+      return await new Promise(resolve => resolve(fakeResponse))
+    }
+  }
+
+  return new PushNotification()
 }
 const makeSut = (): SutTypes => {
-  const sut = new SendNotificationController()
-
+  const pushNotification = pushNotificationStub()
+  const sut = new SendNotificationController(pushNotification)
   return {
-    sut
+    sut,
+    pushNotification
   }
 }
 describe('Send notification controlle', () => {
@@ -20,7 +37,7 @@ describe('Send notification controlle', () => {
       }
     }
 
-    const httpResponse = await sut.send(notification)
+    const httpResponse = await sut.handle(notification)
     expect(httpResponse.statusCode).toBe(400)
     expect(httpResponse.body).toEqual(new Error('Missing param: to'))
   })
@@ -34,7 +51,7 @@ describe('Send notification controlle', () => {
       }
     }
 
-    const httpResponse = await sut.send(notification)
+    const httpResponse = await sut.handle(notification)
     expect(httpResponse.statusCode).toBe(400)
     expect(httpResponse.body).toEqual(new Error('Missing param: title'))
   })
@@ -48,7 +65,7 @@ describe('Send notification controlle', () => {
       }
     }
 
-    const httpResponse = await sut.send(notification)
+    const httpResponse = await sut.handle(notification)
     expect(httpResponse.statusCode).toBe(400)
     expect(httpResponse.body).toEqual(new Error('Missing param: body'))
   })
